@@ -16,10 +16,7 @@ export const useStore = create(
 
       dueDates: [{ id: 1, title: 'SPICE 오류 수정', date: '2026-10-06' }],
       dDays: [{ id: 1, title: '전기기사 필기', date: '2026-11-03' }],
-      
-      // 완료된 과목 이름을 담는 배열
       completedSubjects: [],
-
       studyData: { 
         '회로이론': { 
           'Chap 1. 기본 개념': { 
@@ -50,7 +47,6 @@ export const useStore = create(
         return { studyData: newData };
       }),
 
-      // [신규] 과목 완료 / 복구 토글 기능
       toggleSubjectComplete: (subjectName) => set((state) => {
         const isCompleted = state.completedSubjects.includes(subjectName);
         if (isCompleted) {
@@ -65,7 +61,6 @@ export const useStore = create(
         return { studyData: { ...state.studyData, [subjectName]: {} } };
       }),
 
-      // [신규] 완전 삭제 기능들 (과목, 챕터, 소목차)
       removeSubject: (subjectName) => set((state) => {
         const newData = { ...state.studyData };
         delete newData[subjectName];
@@ -96,7 +91,20 @@ export const useStore = create(
         });
         if (totalSections === 0) return 0;
         return Math.round((completedSections / totalSections) * 100);
-      }
+      },
+
+      // [신규] 백업 파일 데이터를 덮어씌우는 함수
+      overwriteState: (importedData) => set((state) => {
+        if (importedData && importedData.studyData) {
+          return {
+            studyData: importedData.studyData,
+            dueDates: importedData.dueDates || [],
+            dDays: importedData.dDays || [],
+            completedSubjects: importedData.completedSubjects || []
+          };
+        }
+        return state;
+      })
     }),
     { name: 'second-brain-storage' }
   )

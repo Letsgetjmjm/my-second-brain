@@ -1,10 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useRef } from 'react';
 import { useStore } from '../store/useStore';
-import { Clock, BookOpen, Lightbulb, ClipboardList, Plus, Check, Trash2, Pencil, X, CheckCircle, FileText } from 'lucide-react';
+import { Clock, BookOpen, Lightbulb, ClipboardList, Plus, Check, Trash2, Pencil, X, CheckCircle, FileText, Download, Upload } from 'lucide-react';
 
 export default function Dashboard() {
-  // studyData 상태를 가져오도록 추가
-  const { studyData, dueDates, dDays, setCurrentView, addDueDate, removeDueDate, editDueDate, addDDay, removeDDay, editDDay, showToast } = useStore();
+  const { studyData, dueDates, dDays, completedSubjects, setCurrentView, addDueDate, removeDueDate, editDueDate, addDDay, removeDDay, editDDay, showToast, overwriteState } = useStore();
   
   const [newDueTitle, setNewDueTitle] = useState('');
   const [newDueDate, setNewDueDate] = useState('');
@@ -16,6 +15,8 @@ export default function Dashboard() {
   
   const [editingDDay, setEditingDDay] = useState(null);
   const [editDDayData, setEditDDayData] = useState({ title: '', date: '' });
+
+  const fileInputRef = useRef(null);
 
   const getDayStatus = (targetDateStr) => {
     if (!targetDateStr) return { text: '', diff: 0 };
@@ -35,7 +36,6 @@ export default function Dashboard() {
 
   const activeDDays = dDays.filter(item => getDayStatus(item.date).diff >= 0);
 
-  // [핵심] 미해결 문제 개수 자동 계산 엔진
   let unresolvedProblemCount = 0;
   Object.values(studyData || {}).forEach(subject => {
     Object.values(subject || {}).forEach(chapter => {
@@ -45,12 +45,60 @@ export default function Dashboard() {
     });
   });
 
+  // [신규] JSON 백업 내보내기 기능
+  const handleExportData = () => {
+    const backupData = { studyData, dueDates, dDays, completedSubjects };
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `SecondBrain_Backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('데이터가 파일로 안전하게 백업되었습니다.');
+  };
+
+  // [신규] JSON 파일 불러오기 기능
+  const handleImportData = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      try {
+        const imported = JSON.parse(event.target.result);
+        if(imported.studyData) {
+          overwriteState(imported);
+          showToast('데이터가 성공적으로 복구되었습니다!');
+        } else {
+          alert('유효한 백업 파일이 아닙니다.');
+        }
+      } catch (error) {
+        alert('파일을 읽는 중 오류가 발생했습니다.');
+      }
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // 동일한 파일 다시 선택 가능하도록 초기화
+  };
+
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-6 min-h-screen flex flex-col py-10 animate-[fadeIn_0.3s_ease-out]">
-      <h1 className="text-center text-4xl font-extrabold tracking-tight mb-12 text-white">🧠 My Second Brain</h1>
+    <div className="w-full max-w-[1400px] mx-auto px-6 min-h-screen flex flex-col py-10 animate-[fadeIn_0.3s_ease-out] relative">
+      
+      {/* 헤더 및 백업/복구 버튼 영역 */}
+      <div className="flex justify-between items-center mb-12">
+        <div className="w-[120px]"></div> {/* 중앙 정렬을 위한 더미 공간 */}
+        <h1 className="text-4xl font-extrabold tracking-tight text-white m-0">🧠 My Second Brain</h1>
+        <div className="flex gap-3 w-[120px] justify-end">
+          <button onClick={handleExportData} title="데이터 백업하기" className="p-2.5 bg-[#222] text-[#4CAF50] hover:bg-[#4CAF50] hover:text-black border border-[#4CAF50]/30 rounded-xl transition-all shadow-md">
+            <Download size={20} />
+          </button>
+          <button onClick={() => fileInputRef.current?.click()} title="데이터 복구하기" className="p-2.5 bg-[#222] text-[#3498db] hover:bg-[#3498db] hover:text-black border border-[#3498db]/30 rounded-xl transition-all shadow-md">
+            <Upload size={20} />
+          </button>
+          <input type="file" accept=".json" ref={fileInputRef} onChange={handleImportData} className="hidden" />
+        </div>
+      </div>
       
       <div className="grid grid-cols-3 gap-6 mb-10">
-        {/* Due Date 카드 */}
         <div className="bg-[#1a1a1a] border border-[#2a2a40] p-6 rounded-2xl shadow-xl flex flex-col h-[340px]">
           <h3 className="flex items-center gap-3 border-b border-[#333] pb-4 mb-5 text-[#4CAF50] text-xl font-bold">
             <Clock size={22} /> Due date
@@ -91,13 +139,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* 미해결 문제 카드 - 이제 동적 데이터 연동됨! */}
         <div onClick={() => setCurrentView('problems')} className="bg-gradient-to-br from-[#1e272e] to-[#2f3640] border border-[#2a2a40] p-6 rounded-2xl shadow-xl hover:-translate-y-2 transition-all cursor-pointer flex flex-col h-[340px] group">
           <h3 className="flex items-center gap-3 border-b border-yellow-500/30 pb-4 mb-5 text-[#fbc531] text-xl font-bold">
             <ClipboardList size={22} /> Non-solved problem
           </h3>
           <div className="flex-1 flex flex-col items-center justify-center">
-            {/* 하드코딩 3을 없애고 계산된 카운트 변수를 삽입 */}
             <span className={`text-7xl font-black group-hover:scale-110 transition-transform ${unresolvedProblemCount > 0 ? 'text-[#ff4757]' : 'text-[#2ed573]'}`}>
               {unresolvedProblemCount}
             </span>
@@ -107,7 +153,6 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* D-Day 카드 */}
         <div className="bg-[#1a1a1a] border border-[#2a2a40] p-6 rounded-2xl shadow-xl flex flex-col h-[340px]">
           <h3 className="flex items-center gap-3 border-b border-[#333] pb-4 mb-5 text-[#4CAF50] text-xl font-bold">
             <Clock size={22} /> D-Day
