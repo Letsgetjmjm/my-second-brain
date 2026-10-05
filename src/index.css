@@ -1,0 +1,25 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  /* 브라우저 기본 UI(달력 팝업, 스크롤바 등)를 강제로 다크모드에 맞춘다 */
+  color-scheme: dark; 
+}
+
+body { 
+  background-color: #0d0d0d; 
+  color: #f3f4f6; 
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden; /* 불필요한 가로 여백 및 스크롤 완벽 차단 */
+}
+
+.custom-scroll::-webkit-scrollbar { width: 6px; }
+.custom-scroll::-webkit-scrollbar-track { background: transparent; }
+.custom-scroll::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+.custom-scroll::-webkit-scrollbar-thumb:hover { background: #555; }
+
+input, textarea { 
+  color: #ffffff !important; 
+  background-color: #111;
+}
