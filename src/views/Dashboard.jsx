@@ -45,7 +45,7 @@ export default function Dashboard() {
     });
   });
 
-  // [신규] JSON 백업 내보내기 기능
+  // [유지] JSON 백업 내보내기 기능
   const handleExportData = () => {
     const backupData = { studyData, dueDates, dDays, completedSubjects };
     const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
@@ -58,7 +58,7 @@ export default function Dashboard() {
     showToast('데이터가 파일로 안전하게 백업되었습니다.');
   };
 
-  // [신규] JSON 파일 불러오기 기능
+  // [유지] JSON 파일 불러오기 기능
   const handleImportData = (e) => {
     const file = e.target.files[0];
     if (!file) return;
@@ -81,7 +81,7 @@ export default function Dashboard() {
   };
 
   return (
-    <div className="w-full max-w-[1400px] mx-auto px-6 min-h-screen flex flex-col py-10 animate-[fadeIn_0.3s_ease-out] relative">
+    <div className="w-full max-w-[1400px] mx-auto px-6 min-h-screen flex flex-col py-10 animate-[fadeIn_0.3s_ease-out] relative min-w-[1024px]">
       
       {/* 헤더 및 백업/복구 버튼 영역 */}
       <div className="flex justify-between items-center mb-12">
@@ -98,6 +98,7 @@ export default function Dashboard() {
         </div>
       </div>
       
+      {/* 강제 3열 고정 (grid-cols-3) */}
       <div className="grid grid-cols-3 gap-6 mb-10">
         <div className="bg-[#1a1a1a] border border-[#2a2a40] p-6 rounded-2xl shadow-xl flex flex-col h-[340px]">
           <h3 className="flex items-center gap-3 border-b border-[#333] pb-4 mb-5 text-[#4CAF50] text-xl font-bold">
@@ -197,6 +198,7 @@ export default function Dashboard() {
         </div>
       </div>
 
+      {/* 강제 4열 고정 (grid-cols-4) */}
       <div className="grid grid-cols-4 gap-6 flex-1 pb-10">
         <div onClick={() => setCurrentView('archive')} className="bg-[#1a1a1a] border border-[#2a2a40] rounded-2xl flex flex-col justify-center items-center cursor-pointer hover:border-[#4CAF50] hover:-translate-y-2 transition-all shadow-lg p-6">
           <BookOpen size={40} color="#4CAF50" className="mb-4"/>
